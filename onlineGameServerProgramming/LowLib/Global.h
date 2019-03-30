@@ -14,11 +14,12 @@
 #include <vector>
 #include <queue>
 #include <list>
+#include <unordered_map>
 #include <map>
 #include <string>
 #include <utility>
 
-#import "C:\\Program Files\\Common Files\\System\\ADO\\msado15.dll" rename("EOF", "EndOfFile") no_namespace
+#import "C:\\Program Files\\Common Files\\system\\ado\\msado15.dll" rename("EOF", "EndOfFile") no_namespace
 
 
 enum IO_TYPE
