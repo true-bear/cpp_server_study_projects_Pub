@@ -33,14 +33,14 @@ IocpGameServer::~IocpGameServer(void)
 void IocpGameServer::InitProcessFunc()
 {
 	//클라이언트에서 받은 패킷
-	m_FuncProcess[ LoginPlayer_Rq ].funcProcessPacket = cProcessPacket::fnLoginPlayerRq;
-	m_FuncProcess[ MovePlayer_Cn ].funcProcessPacket = cProcessPacket::fnMovePlayerCn;
-	m_FuncProcess[ KeepAlive_Cn ].funcProcessPacket = cProcessPacket::fnKeepAliveCn;
+	m_FuncProcess[ LoginPlayer_Rq ].funcProcessPacket = ProcessPacket::fnLoginPlayerRq;
+	m_FuncProcess[ MovePlayer_Cn ].funcProcessPacket = ProcessPacket::fnMovePlayerCn;
+	m_FuncProcess[ KeepAlive_Cn ].funcProcessPacket = ProcessPacket::fnKeepAliveCn;
 
 	//NPC서버에서 받은 패킷
-	m_FuncProcess[ NPC_NpcInfo_VSn ].funcProcessPacket = cProcessPacket::fnNPCNpcInfoVSn;
-	m_FuncProcess[ NPC_UpdateNpc_VSn ].funcProcessPacket = cProcessPacket::fnNPCUpdateNpcVSn;
-	m_FuncProcess[ NPC_AttackNpcToPlayer_Sn ].funcProcessPacket = cProcessPacket::fnNPCAttackNpcToPlayerSn;
+	m_FuncProcess[ NPC_NpcInfo_VSn ].funcProcessPacket = ProcessPacket::fnNPCNpcInfoVSn;
+	m_FuncProcess[ NPC_UpdateNpc_VSn ].funcProcessPacket = ProcessPacket::fnNPCUpdateNpcVSn;
+	m_FuncProcess[ NPC_AttackNpcToPlayer_Sn ].funcProcessPacket = ProcessPacket::fnNPCAttackNpcToPlayerSn;
 			
 }
 //client가 접속 수락이 되었을 때 호출되는 함수
@@ -51,7 +51,7 @@ bool IocpGameServer::OnAccept( Connection *lpConnection )
 	LOG( LOG_INFO_LOW , 
 		"SYSTEM | IocpGameServer::OnAccept() | IP[%s] Socket[%d] 접속 PlayerCnt[%d]",
 		lpConnection->GetConnectionIp(), lpConnection->GetSocket() ,
-		PlayerManager()->GetPlayerCnt() );
+		g_GetPlayerManager()->GetPlayerCnt() );
 
 	return true;
 }
@@ -92,11 +92,11 @@ void IocpGameServer::OnClose(Connection* lpConnection)
 		"SYSTEM | IocpGameServer::OnClose() | IP[%s] Socket[%d] PKey[%d] Id[%s] 종료  PlayerCnt[%d]",
 		pPlayer->GetConnectionIp(), pPlayer->GetSocket() ,
 		pPlayer->GetPKey(), pPlayer->GetId(),
-		PlayerManager()->GetPlayerCnt() );
+		g_GetPlayerManager()->GetPlayerCnt() );
 	//플레이어를 관리 목록에서 삭제한다.
-	PlayerManager()->RemovePlayer( pPlayer );
+	g_GetPlayerManager()->RemovePlayer( pPlayer );
 	//플레이어가 로그아웃하였다는 것을 월드의 다른 플레이어에게 알린다.
-	PlayerManager()->Send_LogoutPlayer( pPlayer );
+	g_GetPlayerManager()->Send_LogoutPlayer( pPlayer );
 	//NPC서버에 플레이어가 로그아웃했다는 것을 알림
 	if( NULL == m_pNpcServerConn )
 		return;
@@ -124,7 +124,7 @@ bool IocpGameServer::OnSystemMsg( Connection* lpConnection , DWORD dwMsgType , L
 		break;
 	case SYSTEM_UPDATE_TEMPPLAYERPOS:
 		{
-			PlayerManager()->UpdateTempPlayerPos();
+		g_GetPlayerManager()->UpdateTempPlayerPos();
 		}
 		break;
 	}
@@ -135,12 +135,12 @@ bool IocpGameServer::OnSystemMsg( Connection* lpConnection , DWORD dwMsgType , L
 //ini화일에서 스트링을 읽어오는 함수
 int IocpGameServer::GetINIString( char* szOutStr , char* szAppName , char* szKey ,int nSize , char* szFileName )
 {
-	int ret = GetPrivateProfileString( szAppName  , szKey  , "" , szOutStr , nSize , szFileName);
+	int ret = GetPrivateProfileStringA( szAppName  , szKey  , "" , szOutStr , nSize , szFileName);
 	if( 0 == ret )
 	{
 		char szTemp[ 300 ];
 		sprintf( szTemp , "[%s]Config File에 [%s]-[%s]항목은 존재하지 않습니다.", szFileName , szAppName ,szKey );
-		AfxMessageBox( szTemp );
+		//AfxMessageBox( szTemp );
 		return -1;
 	}
 	return 0;
@@ -149,20 +149,22 @@ int IocpGameServer::GetINIString( char* szOutStr , char* szAppName , char* szKey
 //ini화일에서 숫자를 읽어오는 함수
 int	IocpGameServer::GetINIInt( char* szAppName , char* szKey , char* szFileName )
 {
-	int ret = GetPrivateProfileInt( szAppName , szKey  , -1 ,  szFileName );
+	int ret = GetPrivateProfileIntA( szAppName , szKey  , -1 ,  szFileName );
 	if( ret < 0 )
 	{
 		char szTemp[ 300 ];
 		sprintf( szTemp , "[%s]Config File에 [%s]-[%s]항목은 존재하지 않습니다.",
 			szFileName , szAppName ,szKey );
-		AfxMessageBox( szTemp );
+		//AfxMessageBox( szTemp );
 	}
 	return ret;
 }
 
 bool IocpGameServer::ServerStart()
 {
-	CTime time = CTime::GetCurrentTime();
+	//TODO 수정해야 한다
+	/*
+	CTime time = CTime::GetCurrentTime(); 
 	char szOutStr[ 1024];
 
 	if( -1 == GetINIString( m_szLogFileName , BASE_SERVER  , "LOGFILE"  ,  100 , INIFILE_NAME ) )
@@ -180,7 +182,7 @@ bool IocpGameServer::ServerStart()
 
 	//서버 정보 초기화
 	INITCONFIG initConfig;
-	CString		szLogName;	
+	std::string		szLogName;	
 	int nMaxConnectionCnt = 0;
 
 	strcpy( m_szLogFileName, szLogName.GetString() );
@@ -239,7 +241,7 @@ bool IocpGameServer::ServerStart()
 	m_pTickThread->CreateThread( SERVER_TICK );
 	m_pTickThread->Run();
 
-	
+	*/
 
 	return true;
 }

@@ -13,7 +13,7 @@ AreaManager::~AreaManager(void)
 
 bool AreaManager::AddPlayerToArea( Player* pPlayer , BYTE byArea )
 {
-	cMonitor::Owner lock( m_csArea );
+	Monitor::Owner lock( m_csArea );
 	if( byArea < 0 || byArea >= MAX_AREA )
 	{
 		LOG( LOG_ERROR_LOW , 
@@ -39,7 +39,7 @@ bool AreaManager::AddPlayerToArea( Player* pPlayer , BYTE byArea )
 
 bool AreaManager::RemovePlayerFromArea( Player* pPlayer , BYTE byArea )
 {
-	cMonitor::Owner lock( m_csArea );
+	Monitor::Owner lock( m_csArea );
 	if( byArea < 0 || byArea >= MAX_AREA )
 	{
 		LOG( LOG_ERROR_LOW , 
@@ -65,7 +65,7 @@ bool AreaManager::RemovePlayerFromArea( Player* pPlayer , BYTE byArea )
 
 bool AreaManager::TransAreaPlayer( Player* pPlayer )
 {
-	cMonitor::Owner lock( m_csArea );
+	Monitor::Owner lock( m_csArea );
 	BYTE byOldArea = pPlayer->GetArea();
 	BYTE byNewArea = GetPosToArea( pPlayer->GetPos() );
 	if( 0xFF == byNewArea )
@@ -95,7 +95,7 @@ bool AreaManager::TransAreaPlayer( Player* pPlayer )
 
 void AreaManager::UpdateActiveAreas( Player* pPlayer )
 {
-	cMonitor::Owner lock( m_csArea );
+	Monitor::Owner lock( m_csArea );
 	//현재 플레이어가 속한 영역과 주위의 8개의 영역이 플레이어가 영향을
 	//줄 수 있는 영역이다. 최대 9개의 영역에 영향을 줄 수 있는데 그 영역을 구한다.
 	BYTE byArea = GetPosToArea( pPlayer->GetPos() );
@@ -151,9 +151,13 @@ void AreaManager::UpdateActiveAreas( Player* pPlayer )
 	for( int i = 0 ; i < MAX_ACTIVE_AREAS ; i++ )
 	{
 		//설정된 영역이 없다면
-		if( 0xFF == pPlayerActiveAreas[ i ] )
+		if (0xFF == pPlayerActiveAreas[i])
+		{
 			continue;
-		for( int j = 0 ; j < MAX_ACTIVE_AREAS ; j++ )
+		}
+
+		auto j = 0;
+		for(; j < MAX_ACTIVE_AREAS; j++ )
 		{
 			if( pPlayerActiveAreas[ i ] == byNewActiveAreas[ j ] )
 				break;
@@ -181,7 +185,7 @@ void AreaManager::UpdateActiveAreas( Player* pPlayer )
 
 BYTE AreaManager::GetPosToArea( DWORD dwPos )
 {
-	cMonitor::Owner lock( m_csArea );
+	Monitor::Owner lock( m_csArea );
 	int nPosX = dwPos % COL_LINE;
 	int nPosY = dwPos / COL_LINE;
 
@@ -198,7 +202,7 @@ BYTE AreaManager::GetPosToArea( DWORD dwPos )
 
 void AreaManager::Send_MovePlayerToActiveAreas( Player* pPlayer )
 {
-	cMonitor::Owner lock( m_csArea );
+	Monitor::Owner lock( m_csArea );
 	BYTE* pActiveAreas = pPlayer->GetActiveAreas();
 	AREA_IT area_it;
 	for( int i = 0 ; i < MAX_ACTIVE_AREAS ; i++ )
@@ -227,7 +231,7 @@ void AreaManager::Send_MovePlayerToActiveAreas( Player* pPlayer )
 	
 void AreaManager::Send_MovePlayerToInActiveAreas( Player* pPlayer )
 {
-	cMonitor::Owner lock( m_csArea );
+	Monitor::Owner lock( m_csArea );
 	BYTE* pInActiveAreas = pPlayer->GetInActiveAreas();
 	AREA_IT area_it;
 	for( int i = 0 ; i < MAX_INACTIVE_AREAS ; i++ )

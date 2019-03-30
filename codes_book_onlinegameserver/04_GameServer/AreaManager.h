@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../NetLib/PreCompile.h"
+
 class AreaManager : public Singleton , Monitor
 {
 	DECLEAR_SINGLETON( AreaManager );
@@ -27,7 +29,7 @@ public:
 
 private:
 	AREA_MAP		m_mapArea[ MAX_AREA ];
-	cMonitor		m_csArea;
+	Monitor		m_csArea;
 };
 
 CREATE_FUNCTION( AreaManager , g_GetAreaManager );

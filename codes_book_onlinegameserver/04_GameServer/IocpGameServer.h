@@ -1,4 +1,5 @@
 #pragma once
+#include "../NetLib/IocpServer.h"
 #include "TickThread.h"
 #include "Player.h"
 
@@ -7,7 +8,7 @@ enum eGameServerSystemMsg{
 	SYSTEM_UPDATE_TEMPPLAYERPOS,
 };
 
-class IocpGameServer : public IocpServer , Singleton
+class IocpGameServer : public IOCPServer, Singleton
 {
 	DECLEAR_SINGLETON( IocpGameServer );
 

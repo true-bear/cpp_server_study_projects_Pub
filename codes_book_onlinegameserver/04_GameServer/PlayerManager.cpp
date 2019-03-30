@@ -31,7 +31,7 @@ bool PlayerManager::CreatePlayer( INITCONFIG &initConfig , DWORD dwMaxPlayer )
 
 bool PlayerManager::AddPlayer( Player* pPlayer )
 {
-	cMonitor::Owner lock( m_csPlayer );
+	Monitor::Owner lock( m_csPlayer );
 	PLAYER_IT player_it;
 	player_it = m_mapPlayer.find( pPlayer->GetPKey() );
 	//이미 접속되어 있는 플레이어라면
@@ -43,7 +43,7 @@ bool PlayerManager::AddPlayer( Player* pPlayer )
 		return false;
 	}
 	//플레이어 고유키할당
-	pPlayer->SetPKey( IocpGameServer()->GeneratePrivateKey() );
+	pPlayer->SetPKey(g_GetIocpGameServer()->GeneratePrivateKey() );
 	
 	m_mapPlayer.insert( PLAYER_PAIR( pPlayer->GetPKey() , pPlayer ) );
 	return true;
@@ -51,7 +51,7 @@ bool PlayerManager::AddPlayer( Player* pPlayer )
 
 bool PlayerManager::RemovePlayer( Player* pPlayer )
 {
-	cMonitor::Owner lock( m_csPlayer );
+	Monitor::Owner lock( m_csPlayer );
 	PLAYER_IT player_it;
 	player_it = m_mapPlayer.find( pPlayer->GetPKey() );
 	//해당 플레이어가 없는 경우
@@ -64,12 +64,12 @@ bool PlayerManager::RemovePlayer( Player* pPlayer )
 	}
 	m_mapPlayer.erase( pPlayer->GetPKey() );
 	
-	AreaManager()->RemovePlayerFromArea( pPlayer, pPlayer->GetArea() );
+	g_GetAreaManager()->RemovePlayerFromArea( pPlayer, pPlayer->GetArea() );
 	return true;
 }
 Player* PlayerManager::FindPlayer( DWORD dwPkey )
 {
-	cMonitor::Owner lock( m_csPlayer );
+	Monitor::Owner lock( m_csPlayer );
 	PLAYER_IT player_it;
 	player_it = m_mapPlayer.find( dwPkey );
 	//해당 플레이어가 없는 경우
@@ -88,7 +88,7 @@ void PlayerManager::CreateTempPlayer( int nTempPlayerCnt )
 	m_pTempPlayer = new Player[ nTempPlayerCnt ];
 	for( int i = 0 ; i < nTempPlayerCnt ; i++ )
 	{
-		m_pTempPlayer[ i ].SetPKey( IocpGameServer()->GeneratePrivateKey() );
+		m_pTempPlayer[ i ].SetPKey(g_GetIocpGameServer()->GeneratePrivateKey() );
 		m_pTempPlayer[ i ].SetTempPlayInfo();
 		m_mapTempPlayer.insert( 
 			PLAYER_PAIR( m_pTempPlayer[ i ].GetPKey() , &m_pTempPlayer[ i ] ) );
@@ -99,7 +99,7 @@ void PlayerManager::CreateTempPlayer( int nTempPlayerCnt )
 
 void PlayerManager::DestroyTempPlayer()
 {
-	cMonitor::Owner lock( m_csPlayer );
+	Monitor::Owner lock( m_csPlayer );
 	m_mapTempPlayer.clear();
 	delete [] m_pTempPlayer;
 	LOG( LOG_INFO_LOW , 
@@ -108,7 +108,7 @@ void PlayerManager::DestroyTempPlayer()
 
 void PlayerManager::UpdateTempPlayerPos()
 {
-	cMonitor::Owner lock( m_csPlayer );
+	Monitor::Owner lock( m_csPlayer );
 	PLAYER_IT player_it;
 	for( player_it = m_mapTempPlayer.begin(); player_it != m_mapTempPlayer.end() ; player_it++ )
 	{
@@ -165,18 +165,18 @@ void PlayerManager::UpdateTempPlayerPos()
 
 		pTempPlayer->SetBPos( pTempPlayer->GetPos() );
 		pTempPlayer->SetPos( (nPosY * COL_LINE) + nPosX );
-		bool bRet = AreaManager()->TransAreaPlayer( pTempPlayer );
-		AreaManager()->Send_MovePlayerToActiveAreas( pTempPlayer );
+		bool bRet = g_GetAreaManager()->TransAreaPlayer( pTempPlayer );
+		g_GetAreaManager()->Send_MovePlayerToActiveAreas( pTempPlayer );
 		//현재 플레이어가 다른 지역으로 이동하였다면
 		if( true == bRet )
-			AreaManager()->Send_MovePlayerToInActiveAreas( pTempPlayer );
+			g_GetAreaManager()->Send_MovePlayerToInActiveAreas( pTempPlayer );
 		
 	}
 }
 
 void PlayerManager::CheckKeepAliveTick( DWORD dwServerTick )
 {
-	cMonitor::Owner lock( m_csPlayer );
+	Monitor::Owner lock( m_csPlayer );
 	PLAYER_IT player_it;
 	for( player_it = m_mapPlayer.begin(); player_it != m_mapPlayer.end() ; player_it++ )
 	{
@@ -185,9 +185,9 @@ void PlayerManager::CheckKeepAliveTick( DWORD dwServerTick )
 			continue;
 		//현재 서버 틱과 플레이어가 KeepAlive_Cn패킷을 보낸 서버 틱과의 차이가 KEEPALIVE_TICK보다
 		//크다면 잘못된 연결의 플레이어라고 판단하고 연결을 종료한다.
-		if( ( IocpGameServer()->GetServerTick() - pPlayer->GetKeepAliveTick() ) > KEEPALIVE_TICK )
+		if( (g_GetIocpGameServer()->GetServerTick() - pPlayer->GetKeepAliveTick() ) > KEEPALIVE_TICK )
 		{
-			IocpGameServer()->CloseConnection( pPlayer );
+			g_GetIocpGameServer()->CloseConnection( pPlayer );
 			LOG( LOG_INFO_NORMAL ,
 				"SYSTEM | PlayerManager::CheckKeepAliveTick() |  PKey(%d) 플레이어에게 일정 시간동안 패킷이 오지 않음",
 				pPlayer->GetPKey() );
@@ -197,52 +197,52 @@ void PlayerManager::CheckKeepAliveTick( DWORD dwServerTick )
 
 void PlayerManager::Send_WorldPlayerInfosToConnectPlayer( Player* pPlayer )
 {
-	cMonitor::Owner lock( m_csPlayer );
+	Monitor::Owner lock( m_csPlayer );
 	PLAYER_IT player_it;
-	VBuffer()->Init();
-	VBuffer()->SetShort( WorldPlayerInfo_VAq );
+	g_GetVBuffer()->Init();
+	g_GetVBuffer()->SetShort( WorldPlayerInfo_VAq );
 	short sPlayerCnt = (short)m_mapPlayer.size() + (short)m_mapTempPlayer.size() - 1;
-	VBuffer()->SetShort( sPlayerCnt );
+	g_GetVBuffer()->SetShort( sPlayerCnt );
 	for( player_it = m_mapPlayer.begin(); player_it != m_mapPlayer.end() ; player_it++ )
 	{
 		Player* pWorldPlayer = (Player*)player_it->second;
 		if( pWorldPlayer == pPlayer )
 			continue;
-		VBuffer()->SetInteger( pWorldPlayer->GetPKey() );
-		VBuffer()->SetString( pWorldPlayer->GetId() );
-		VBuffer()->SetString( pWorldPlayer->GetNickName() );
-		VBuffer()->SetString( pWorldPlayer->GetName() );
-		VBuffer()->SetInteger( pWorldPlayer->GetPos() );
-		VBuffer()->SetChar( pWorldPlayer->GetLevel() );
-		VBuffer()->SetChar( pWorldPlayer->GetStr() );
-		VBuffer()->SetChar( pWorldPlayer->GetDur() );
-		VBuffer()->SetInteger( pWorldPlayer->GetHp() );
-		VBuffer()->SetInteger( pWorldPlayer->GetExp() );
+		g_GetVBuffer()->SetInteger( pWorldPlayer->GetPKey() );
+		g_GetVBuffer()->SetString( pWorldPlayer->GetId() );
+		g_GetVBuffer()->SetString( pWorldPlayer->GetNickName() );
+		g_GetVBuffer()->SetString( pWorldPlayer->GetName() );
+		g_GetVBuffer()->SetInteger( pWorldPlayer->GetPos() );
+		g_GetVBuffer()->SetChar( pWorldPlayer->GetLevel() );
+		g_GetVBuffer()->SetChar( pWorldPlayer->GetStr() );
+		g_GetVBuffer()->SetChar( pWorldPlayer->GetDur() );
+		g_GetVBuffer()->SetInteger( pWorldPlayer->GetHp() );
+		g_GetVBuffer()->SetInteger( pWorldPlayer->GetExp() );
 	}
 	for( player_it = m_mapTempPlayer.begin(); player_it != m_mapTempPlayer.end() ; player_it++ )
 	{
 		Player* pTempPlayer = (Player*)player_it->second;
-		VBuffer()->SetInteger( pTempPlayer->GetPKey() );
-		VBuffer()->SetString( pTempPlayer->GetId() );
-		VBuffer()->SetString( pTempPlayer->GetNickName() );
-		VBuffer()->SetString( pTempPlayer->GetName() );
-		VBuffer()->SetInteger( pTempPlayer->GetPos() );
-		VBuffer()->SetChar( pTempPlayer->GetLevel() );
-		VBuffer()->SetChar( pTempPlayer->GetStr() );
-		VBuffer()->SetChar( pTempPlayer->GetDur() );
-		VBuffer()->SetInteger( pTempPlayer->GetHp() );
-		VBuffer()->SetInteger( pTempPlayer->GetExp() );
+		g_GetVBuffer()->SetInteger( pTempPlayer->GetPKey() );
+		g_GetVBuffer()->SetString( pTempPlayer->GetId() );
+		g_GetVBuffer()->SetString( pTempPlayer->GetNickName() );
+		g_GetVBuffer()->SetString( pTempPlayer->GetName() );
+		g_GetVBuffer()->SetInteger( pTempPlayer->GetPos() );
+		g_GetVBuffer()->SetChar( pTempPlayer->GetLevel() );
+		g_GetVBuffer()->SetChar( pTempPlayer->GetStr() );
+		g_GetVBuffer()->SetChar( pTempPlayer->GetDur() );
+		g_GetVBuffer()->SetInteger( pTempPlayer->GetHp() );
+		g_GetVBuffer()->SetInteger( pTempPlayer->GetExp() );
 	}
-	char* pWorldPlayerInfos = pPlayer->PrepareSendPacket( VBuffer()->GetCurBufSize() );
+	char* pWorldPlayerInfos = pPlayer->PrepareSendPacket(g_GetVBuffer()->GetCurBufSize() );
 	if( NULL == pWorldPlayerInfos )
 		return;
-	VBuffer()->CopyBuffer( pWorldPlayerInfos );
-	pPlayer->SendPost( VBuffer()->GetCurBufSize() );
+	g_GetVBuffer()->CopyBuffer( pWorldPlayerInfos );
+	pPlayer->SendPost(g_GetVBuffer()->GetCurBufSize() );
 }
 
 void PlayerManager::Send_LoginPlayer( Player* pPlayer )
 {
-	cMonitor::Owner lock( m_csPlayer );
+	Monitor::Owner lock( m_csPlayer );
 	PLAYER_IT player_it;
 	for( player_it = m_mapPlayer.begin(); player_it != m_mapPlayer.end() ; player_it++ )
 	{
@@ -270,7 +270,7 @@ void PlayerManager::Send_LoginPlayer( Player* pPlayer )
 
 void PlayerManager::Send_LogoutPlayer( Player* pPlayer )
 {
-	cMonitor::Owner lock( m_csPlayer );
+	Monitor::Owner lock( m_csPlayer );
 	PLAYER_IT player_it;
 	for( player_it = m_mapPlayer.begin(); player_it != m_mapPlayer.end() ; player_it++ )
 	{

@@ -35,7 +35,7 @@ void ProcessPacket::fnLoginPlayerRq( Player* pPlayer,  DWORD dwSize , char* pRec
 
 	///////////////////////////////////////////////////////////
 	//Npc서버에 플레이어가 로그인 했다는 것을 알린다.
-	auto pNpcConn = GetIocpGameServer()->GetNpcServerConn();
+	auto pNpcConn = g_GetIocpGameServer()->GetNpcServerConn();
 	if( NULL == pNpcConn )
 		return;
 	NPCLoginPlayerCn* pLoginPlayer = (NPCLoginPlayerCn*)pNpcConn->PrepareSendPacket( sizeof( NPCLoginPlayerCn ) );

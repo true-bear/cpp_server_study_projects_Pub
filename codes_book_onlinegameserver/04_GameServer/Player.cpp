@@ -46,9 +46,9 @@ void Player::SetTempPlayInfo()
 	m_byDur = rand() % 30 + 1;
 	m_dwHp = 300;
 	m_dwExp = rand() % 40;
-	m_byArea = AreaManager()->GetPosToArea( m_dwPos );
-	AreaManager()->UpdateActiveAreas( this );
-	AreaManager()->AddPlayerToArea( this , m_byArea );
+	m_byArea = g_GetAreaManager()->GetPosToArea( m_dwPos );
+	g_GetAreaManager()->UpdateActiveAreas( this );
+	g_GetAreaManager()->AddPlayerToArea( this , m_byArea );
 }
 
 void Player::Send_PlayerInfo()
