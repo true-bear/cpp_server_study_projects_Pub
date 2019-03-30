@@ -88,7 +88,8 @@ LockSafeScope::LockSafeScope(Lock *lock, LPCWSTR fileName, int lineNo)
 	}
 
 	lock_->lock(fileName, lineNo);
-	lock->setThreadId(GET_CURRENT_THREAD_ID());
+	//auto threadId = std::hash<std::thread::id>()(std::this_thread::get_id());
+	lock->setThreadId(GET_CURRENT_THREAD_ID);
 }
 
 LockSafeScope::~LockSafeScope()
@@ -123,7 +124,7 @@ Thread에서는 걸고있는 Lock 번호가 있음.
 Lock* LockManager::searchLockCycle(Lock *newLock)
 {
 	//list 따라 lock 이름을 비교해 본다.
-	Thread *thread = ThreadManager::getInstance().at(GET_CURRENT_THREAD_ID());
+	Thread *thread = ThreadManager::getInstance().at(GET_CURRENT_THREAD_ID);
 	if (!thread) {
 		return nullptr;
 	}

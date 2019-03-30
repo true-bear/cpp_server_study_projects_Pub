@@ -145,9 +145,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <Text Include="ReadMe.txt" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="Server\ChattingProcess.h" />
     <ClInclude Include="Server\User.h" />
     <ClInclude Include="Server\UserManager.h" />

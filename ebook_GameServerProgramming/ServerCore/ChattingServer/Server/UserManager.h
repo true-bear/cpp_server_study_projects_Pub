@@ -1,11 +1,13 @@
 #pragma once
 #include "stdafx.h"
+#include <unordered_map>
+
 class User;
 class Session;
 
 class UserManager : public Singleton < UserManager >
 {
-	hash_map<oid_t, User*> userPool_;
+	std::unordered_map<oid_t, User*> userPool_;
 
 public:
 	void insert(User *user)

@@ -2,7 +2,7 @@
 #include "stdafx.h"
 
 #define MAKE_THREAD(className, process)	(new Thread(new thread_t(&className##::##process, this), L#className))
-#define GET_CURRENT_THREAD_ID		std::this_thread::get_id().hash
+#define GET_CURRENT_THREAD_ID		std::hash<std::thread::id>()(std::this_thread::get_id())
 class Lock;
 typedef std::function<void(void *)> ThreadFunction;
 

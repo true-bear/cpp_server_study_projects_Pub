@@ -5,7 +5,7 @@
 #include <comutil.h>
 #include <conio.h>
 
-#import "c:\Program Files\Common Files\System\ADO\msado15.dll"  rename("EOF", "EndOfFile")
+#import "c:\Program Files\Common Files\system\ado\msado15.dll"  rename("EOF", "EndOfFile")
 #include "Database.h"
 
 typedef ADODB::_ConnectionPtr           dbConnectionPtr;
